@@ -221,7 +221,7 @@ static final List<Connection> POOL = List.ofLazy(8, i -> open(i));
 | UTF-8 как кодировка по умолчанию | 400 (18) | Всё равно передавайте `StandardCharsets.UTF_8` явно; Error Prone `DefaultCharset` | `[не проверено]` |
 | String Templates удалены | 465 withdrawn (23) | `String.formatted`, `MessageFormat`, `StringBuilder`; параметризованный SQL | — |
 | Динамическая загрузка агентов предупреждает | 451 (21) | `-XX:+EnableDynamicAgentLoading` для инструментов вроде inline-моков Mockito; лучше `-javaagent` | `[не проверено]` |
-| javac перестал по умолчанию запускать annotation processors из classpath | JDK 23 (release note `[не проверено]`) | Задавать процессоры явно: `<annotationProcessorPaths>` в maven-compiler-plugin или `-proc:full` | проверено локально (JDK 25, Windows 11): JMH-проект собрался без ошибок, но без сгенерированного `BenchmarkList`; исправлено `<annotationProcessorPaths>` и `-proc:full` |
+| javac перестал по умолчанию запускать annotation processors из classpath | JDK 23 (JDK-8321314) | Задавать процессоры явно: `<annotationProcessorPaths>` в maven-compiler-plugin или `-proc:full` | проверено локально (JDK 25, Windows 11): JMH-проект собрался без ошибок, но без сгенерированного `BenchmarkList`; исправлено `<annotationProcessorPaths>` и `-proc:full` |
 
 Последняя строка касается любых процессоров: JMH, Lombok, MapStruct, Immutables, Dagger, RecordBuilder. Сборка при этом проходит молча, а ошибка проявляется позже, в рантайме.
 

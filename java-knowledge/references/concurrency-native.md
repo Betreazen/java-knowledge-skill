@@ -266,7 +266,7 @@
 - **Виртуальные потоки всегда daemon** (проверено локально). В Spring Boot полностью виртуальное приложение может завершиться по окончании `main`: задать `spring.main.keep-alive=true`.
 - **ThreadLocal работает, но стоит памяти:** у каждого виртуального потока своя копия; не использовать как пул объектов или кэш. Для контекста — `ScopedValue`.
 - **Переключатели во фреймворках**
-  - Spring Boot 3.2+: `spring.threads.virtual.enabled=true` (обработка запросов Tomcat/Jetty, `@Async` → `SimpleAsyncTaskExecutor`, планировщик → `SimpleAsyncTaskScheduler`; свойства пулов игнорируются). В документации: «Java 24 or later is strongly recommended».
+  - Spring Boot 3.2+: `spring.threads.virtual.enabled=true` (обработка запросов Tomcat/Jetty, `@Async` → `SimpleAsyncTaskExecutor`, планировщик → `SimpleAsyncTaskScheduler`; свойства пулов игнорируются). В документации: «Java 24 or later is strongly recommended». В Spring Boot 4 то же свойство переключает больше компонентов, включая слушатели Kafka и Rabbit и HTTP-клиенты, — см. [domains-server.md → «Фреймворки и рантаймы»](domains-server.md#1-фреймворки-и-рантаймы).
   - Quarkus: явное включение на эндпоинт через `@RunOnVirtualThread` (намеренно не глобально).
   - Helidon 4 SE WebServer («Níma») целиком построен на виртуальных потоках, API в блокирующем стиле; нужна Java 21+, для 4.3+ рекомендована 25 `[не проверено]`.
   - Tomcat 10.1/11: `<Connector ... useVirtualThreads="true">`; Jetty 12: executor на виртуальных потоках в `QueuedThreadPool`/`VirtualThreadPool`. Точные имена параметров перечитать в документации своей версии сервера.

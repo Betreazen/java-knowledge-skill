@@ -232,7 +232,7 @@ for i in 1 2 3 4 5; do
     run ../wt-hyp "$OUT/after/run$i.json"; run ../wt-main "$OUT/before/run$i.json"
   fi
 done
-java <путь к скиллу>/scripts/BenchCompare.java "$OUT/before" "$OUT/after" --threshold 5
+java ~/.claude/skills/java-knowledge/scripts/BenchCompare.java "$OUT/before" "$OUT/after" --threshold 5   # путь при установке скилла для всех проектов
 ```
 
 На Windows цикл работает в Git Bash. Для одного бенчмарка добавьте его имя после `benchmarks.jar`, чтобы не гонять все. На Gradle замените путь к jar на `build/libs/<проект>-jmh.jar`.

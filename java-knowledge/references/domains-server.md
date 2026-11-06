@@ -26,7 +26,7 @@
 
 | Решение | По умолчанию | Альтернатива | Не брать в новый код |
 |---|---|---|---|
-| Фреймворк | Spring Boot 4.1 (4.2 с ноября 2026) на Spring Framework 7 | Quarkus 3.40 LTS (быстрый старт, native), Micronaut 5, Helidon 4.5 LTS (блокирующий код на виртуальных потоках), Jakarta EE 11 на WildFly, Open Liberty или Payara (стандарты, готовый app-сервер) | Spring Boot 3.5 (открытая поддержка закончилась 2026-06-30); Spark Java `[устарело]` → Javalin |
+| Фреймворк | Spring Boot 4.1 (4.2 — на 6 ноября 2026 в RC2, GA ожидается в конце ноября) на Spring Framework 7 | Quarkus 3.40 LTS (быстрый старт, native), Micronaut 5, Helidon 4.5 LTS (блокирующий код на виртуальных потоках), Jakarta EE 11 на WildFly, Open Liberty или Payara (стандарты, готовый app-сервер) | Spring Boot 3.5 (открытая поддержка закончилась 2026-06-30); Spark Java `[устарело]` → Javalin |
 | DI | Spring DI; на Quarkus — CDI (ArC); на Micronaut — DI на этапе компиляции | — | `javax.annotation` и `javax.inject` (поддержка удалена в Spring 7) → `jakarta.*` |
 | HTTP-клиент | `RestClient` (блокирующий) или интерфейсы `@HttpExchange` с `@ImportHttpServices`; `WebClient` в реактивном стеке | JDK `java.net.http.HttpClient`, OkHttp 5, Apache HttpClient 5.6, Retrofit | `RestTemplate` `[устарело]` → `RestClient` (формально `@Deprecated` в 7.1, удаление в 8.0) |
 | Доступ к БД | Spring Data JPA и Hibernate 7 с `LAZY` везде и DTO-проекциями на чтение; `JdbcClient` для простого SQL | jOOQ 3.21 для сложного SQL, Spring Data JDBC, MyBatis 3.5, Jdbi 3 | `spring.jpa.open-in-view=true` (OSIV); R2DBC без полностью реактивного стека; `hibernate-jpamodelgen` `[устарело]` → `hibernate-processor` |
@@ -260,7 +260,7 @@
 
 | Задача | Выбор по умолчанию | Альтернативы | Почему |
 |---|---|---|---|
-| Обычный бизнес-сервис, большая команда, найм | Spring Boot 4.1 (4.2 с ноября 2026) | Quarkus | Самая большая экосистема, документация, интеграции |
+| Обычный бизнес-сервис, большая команда, найм | Spring Boot 4.1 (4.2 — на 6 ноября 2026 в RC2, GA ожидается в конце ноября) | Quarkus | Самая большая экосистема, документация, интеграции |
 | Быстрый старт и малый RSS в Kubernetes, native в приоритете | Quarkus 3.40 LTS | Micronaut 5, Spring Boot с AOT cache или native | Аугментация при сборке, Dev Services |
 | Serverless-функции | Quarkus или Micronaut native; Spring Boot с SnapStart | простой handler с SnapStart | Доминирует холодный старт |
 | Стандарты или существующий app-сервер | Jakarta EE 11 на WildFly, Open Liberty, Payara | Quarkus (MicroProfile) | Переносимость, поддержка вендора |

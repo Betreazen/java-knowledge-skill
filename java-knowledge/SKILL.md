@@ -30,6 +30,23 @@ description: Knowledge base and workflow for Java and the JVM in any domain — 
 
 Каждый справочник начинается с оглавления. Читайте только нужный раздел, а не файл целиком.
 
+Частые вопросы и разделы с ответом:
+
+| Вопрос | Раздел |
+| --- | --- |
+| После перехода на JDK 23+ пропали сгенерированные классы (Lombok, MapStruct, JMH), а сборка проходит; другие неочевидные сбои сборки | [toolchain.md → «Грабли: сводка»](references/toolchain.md#грабли-сводка) |
+| Какой командой проверить проект перед слиянием | [toolchain.md → «Минимальные проверки качества»](references/toolchain.md#минимальные-проверки-качества) |
+| Что видно в профиле или бенчмарке и что с этим делать | [performance.md → «Симптом → техника → источник»](references/performance.md#симптом--техника--источник) |
+| Как написать бенчмарк, чтобы он не врал | [performance.md → «Бенчмарки: JMH»](references/performance.md#бенчмарки-jmh) |
+| Чем профилировать на Windows, Linux и macOS | [performance.md → «Профилирование»](references/performance.md#профилирование) |
+| Можно ли использовать возможность языка на нашей версии JDK | [idioms-patterns.md → «Версии языка: Java 17–28»](references/idioms-patterns.md#версии-языка-java-1728) |
+| Переводить ли сервис на виртуальные потоки и что проверить | [concurrency-native.md → «Виртуальные потоки»](references/concurrency-native.md#виртуальные-потоки), для Spring Boot 4 — ещё [domains-server.md → «Фреймворки и рантаймы»](references/domains-server.md#1-фреймворки-и-рантаймы) |
+| Какую модель конкурентности выбрать под нагрузку | [concurrency-native.md → «Выбор инструмента по нагрузке»](references/concurrency-native.md#выбор-инструмента-по-нагрузке) |
+| Что изменилось в Spring Boot 4, Jackson 3, Hibernate 7 и что удалено | [domains-server.md → «Версии на ноябрь 2026»](references/domains-server.md#версии-на-ноябрь-2026) |
+| Медленный эндпоинт, N+1, пул соединений | [domains-server.md → «Производительность сервера: симптомы»](references/domains-server.md#9-производительность-сервера-симптомы) |
+| Как разложить проект на модули и закрепить границы | [architecture.md → «Короткие правила по умолчанию»](references/architecture.md#короткие-правила-по-умолчанию) |
+| Существует ли книга или издание | [books.md → «Что вышло, что в раннем доступе и чего не существует»](references/books.md#что-вышло-что-в-раннем-доступе-и-чего-не-существует) |
+
 Скрипт [scripts/BenchCompare.java](scripts/BenchCompare.java) сравнивает прогоны JMH «до» и «после» по их JSON с учётом шума между прогонами и возвращает код 1 при регрессии. Запуск без сборки: `java BenchCompare.java <до> <после>` на JDK 17+. Он нужен на этапе 11 пайплайна.
 
 ## Как работать
