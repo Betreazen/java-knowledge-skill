@@ -53,6 +53,18 @@ templates.forEach(([lang, file], i) => {
   else console.log(`ok   template ${file}`);
 });
 
+// Фрагмент pom.xml для JMH из performance.md должен стоять в tests/jmh/pom.xml дословно.
+{
+  const perf = read('java-knowledge/references/performance.md').split('\n');
+  const at = perf.findIndex((l) => l.includes('annotationProcessorPaths') && l.includes('jmh-generator-annprocess'));
+  const open = perf.findIndex((l, i) => i > at && l === '```xml');
+  const close = perf.findIndex((l, i) => i > open && l === '```');
+  const fragment = norm(perf.slice(open + 1, close).join('\n'));
+  if (at < 0 || open < 0 || close < 0) fail('performance.md: JMH pom fragment not found');
+  else if (!norm(read('tests/jmh/pom.xml')).includes(fragment)) fail('performance.md JMH pom fragment differs from tests/jmh/pom.xml');
+  else console.log('ok   template tests/jmh/pom.xml (fragment from performance.md)');
+}
+
 // ---- 2. ссылки и якоря ----
 const mdFiles = [];
 (function walk(dir) {

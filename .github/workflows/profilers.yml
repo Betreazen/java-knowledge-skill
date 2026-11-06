@@ -1,0 +1,109 @@
+name: profilers
+# Проверяет сниппет JMH из performance.md и профайлеры, которые работают только на Linux.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'tests/jmh/**'
+      - '.github/workflows/profilers.yml'
+permissions:
+  contents: read
+
+jobs:
+  jmh:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    defaults:
+      run:
+        shell: bash
+        working-directory: tests/jmh
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+      - name: Build benchmarks.jar from the performance.md fragment
+        run: mvn -B -ntp package
+      - name: Benchmarks are found (fails on JDK 23+ without annotationProcessorPaths)
+        run: java -jar target/benchmarks.jar -l | grep -q 'demo.JoinBench.concat'
+      - name: Two short runs with -prof gc and BenchCompare
+        run: |
+          for i in 1 2; do
+            java -jar target/benchmarks.jar -f 1 -wi 2 -i 3 -w 1s -r 1s -p size=1000 -prof gc -rf json -rff run$i.json
+          done
+          set +e
+          java ../../java-knowledge/scripts/BenchCompare.java run1.json run2.json
+          code=$?
+          test "$code" -ne 2
+
+  linux-profilers:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: tests/jmh
+    env:
+      SHORT: -f 1 -wi 2 -i 3 -w 1s -r 1s -p size=1000
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+      - run: mvn -B -ntp -q package
+      - name: Environment
+        run: |
+          uname -r
+          cat /etc/os-release | head -2
+          echo "perf_event_paranoid=$(cat /proc/sys/kernel/perf_event_paranoid) kptr_restrict=$(cat /proc/sys/kernel/kptr_restrict)"
+          which perf || echo "no perf"
+          java -version
+      - name: Download async-profiler 4.6
+        run: |
+          curl -sL https://github.com/async-profiler/async-profiler/releases/download/v4.6/async-profiler-4.6-linux-x64.tar.gz | tar xz
+          echo "AP=$PWD/async-profiler-4.6-linux-x64/lib/libasyncProfiler.so" >> "$GITHUB_ENV"
+      - name: async-profiler cpu, default kernel settings
+        continue-on-error: true
+        run: |
+          java -jar target/benchmarks.jar $SHORT -prof "async:libPath=$AP;event=cpu;output=flamegraph;dir=prof-cpu" 2>&1 | tee cpu.log | grep -i -E 'warn|error|perf|ctimer|itimer|fall' || true
+          find prof-cpu -type f -exec ls -la {} \;
+      - name: async-profiler alloc
+        continue-on-error: true
+        run: |
+          java -jar target/benchmarks.jar $SHORT -prof "async:libPath=$AP;event=alloc;output=collapsed;dir=prof-alloc" 2>&1 | grep -i -E 'warn|error' || true
+          find prof-alloc -type f -exec wc -l {} \;
+      - name: JFR CPU-time sampling (JEP 509)
+        continue-on-error: true
+        run: |
+          java -jar target/benchmarks.jar demo.JoinBench.concat $SHORT -jvmArgsAppend "-XX:StartFlightRecording=jdk.CPUTimeSample#enabled=true,filename=$PWD/cpu.jfr" > jfr.log 2>&1
+          tail -3 jfr.log
+          jfr summary cpu.jfr | grep -i -E 'CPUTimeSample|ExecutionSample'
+          jfr view cpu-time-hot-methods cpu.jfr | head -12
+      - name: perfasm and perfnorm, default kernel settings
+        continue-on-error: true
+        run: |
+          java -jar target/benchmarks.jar demo.JoinBench.builder $SHORT -prof perfnorm 2>&1 | grep -i -E 'error|cannot|fail|perf|cycles|instructions' | head -8
+          java -jar target/benchmarks.jar demo.JoinBench.builder $SHORT -prof perfasm 2>&1 | grep -i -E 'error|cannot|fail|perf|hsdis' | head -8
+      - name: Allow perf events and install perf
+        continue-on-error: true
+        run: |
+          sudo sysctl -w kernel.perf_event_paranoid=1 kernel.kptr_restrict=0
+          sudo apt-get update -qq
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq "linux-tools-$(uname -r)" linux-tools-common > /dev/null || sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq linux-tools-generic > /dev/null
+          which perf && perf --version
+      - name: perfnorm and perfasm after enabling perf
+        continue-on-error: true
+        run: |
+          java -jar target/benchmarks.jar demo.JoinBench.builder $SHORT -prof perfnorm 2>&1 | grep -E 'JoinBench.builder:' | head -12
+          java -jar target/benchmarks.jar demo.JoinBench.builder $SHORT -prof perfasm 2>&1 | grep -i -E 'error|hsdis|cannot|\.\.\.\.\[Hottest|c2, level 4' | head -10
+      - name: async-profiler cpu after enabling perf
+        continue-on-error: true
+        run: |
+          java -jar target/benchmarks.jar $SHORT -prof "async:libPath=$AP;event=cpu;output=flamegraph;dir=prof-cpu2" 2>&1 | grep -i -E 'warn|error' || true
+          find prof-cpu2 -type f -exec ls -la {} \;

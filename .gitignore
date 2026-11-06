@@ -7,3 +7,6 @@
 !/LICENSE
 !/tests/
 !/.github/
+target/
+build/
+.gradle/
