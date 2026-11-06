@@ -5,3 +5,5 @@
 !/java-knowledge/
 !/.gitattributes
 !/LICENSE
+!/tests/
+!/.github/
