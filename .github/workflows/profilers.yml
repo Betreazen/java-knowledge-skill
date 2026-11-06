@@ -97,11 +97,16 @@ jobs:
           sudo apt-get update -qq
           sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq "linux-tools-$(uname -r)" linux-tools-common > /dev/null || sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq linux-tools-generic > /dev/null
           which perf && perf --version
+      - name: Hardware counters available?
+        continue-on-error: true
+        run: |
+          perf stat -e cycles,instructions true 2>&1 | tail -8
+          perf stat -e task-clock true 2>&1 | tail -5
       - name: perfnorm and perfasm after enabling perf
         continue-on-error: true
         run: |
-          java -jar target/benchmarks.jar demo.JoinBench.builder $SHORT -prof perfnorm 2>&1 | grep -E 'JoinBench.builder:' | head -12
-          java -jar target/benchmarks.jar demo.JoinBench.builder $SHORT -prof perfasm 2>&1 | grep -i -E 'error|hsdis|cannot|\.\.\.\.\[Hottest|c2, level 4' | head -10
+          java -jar target/benchmarks.jar demo.JoinBench.builder $SHORT -prof perfnorm 2>&1 | grep -v WARNING | tail -25
+          java -jar target/benchmarks.jar demo.JoinBench.builder $SHORT -prof perfasm 2>&1 | grep -v WARNING | grep -v '^\s*$' | head -60
       - name: async-profiler cpu after enabling perf
         continue-on-error: true
         run: |
