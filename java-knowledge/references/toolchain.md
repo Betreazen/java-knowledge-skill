@@ -1174,4 +1174,4 @@ jobs:
         ./
 ```
 
-На GitHub этот workflow в ходе исследования не запускался. Каждый шаг повторяет команду, проверенную локально, а версии действий сверены с GitHub releases API. Для полностью открытой конфигурации Gradle добавьте в `setup-gradle` вход `cache-provider: basic` ([раздел 9](#9-ci-на-github-actions)).
+Workflow проверен на GitHub Actions (ноябрь 2026): все задания зелёные — Maven на Ubuntu с JDK 25 и 27 и на Windows с JDK 25, Gradle, OSV-Scanner (он разобрал `pom.xml` и уязвимостей не нашёл). Он работает в CI репозитория скилла дословно, к нему добавлен только рабочий каталог, и вместе с ним каждый раз собираются все шаблоны этого раздела. Версии действий на ноябрь 2026 последние: checkout v7.0.1, setup-java v6.2.0, upload-artifact v7.0.2, gradle/actions v6.4.1, osv-scanner-action v2.7.0. Метка `ubuntu-latest` переезжает на Ubuntu 26 с 19 октября 2026; в ноябре раннеры ещё были на 24.04. Для полностью открытой конфигурации Gradle добавьте в `setup-gradle` вход `cache-provider: basic` ([раздел 9](#9-ci-на-github-actions)).

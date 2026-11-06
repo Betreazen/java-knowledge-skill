@@ -164,11 +164,11 @@ done
   | Разбор без GUI | `jfr view hot-methods rec.jfr`, `allocation-by-site`, `contention-by-site`, `gc-pauses`, `deoptimizations-by-reason` | горячие методы, места аллокаций, блокировки, паузы GC, деоптимизации — текстом, который агент читает сам | да |
   | Время методов (JEP 520, JDK 25) | `-XX:StartFlightRecording:method-timing=::<clinit>,filename=t.jfr`, затем `jfr view method-timing t.jfr` | точное время выбранных методов без агента | да |
   | Стек JMH | `-prof stack` | где проводят время потоки бенчмарка | да |
-  | async-profiler 4.6 | `-prof async:libPath=...;output=flamegraph` | flame graph CPU, аллокаций, блокировок, wall-clock | нет, только Linux и macOS |
-  | perfasm | `-prof perfasm` | горячий машинный код | нет, только Linux |
+  | async-profiler 4.6 | `-prof "async:libPath=...;event=cpu;output=flamegraph"` | flame graph CPU, аллокаций, блокировок, wall-clock | нет, только Linux и macOS; на Linux `cpu` и `alloc` работают без root |
+  | perfnorm, perfasm | `-prof perfnorm`, `-prof perfasm` | аппаратные счётчики на операцию, горячий машинный код | нет; на Linux нужны `perf`, `sudo sysctl kernel.perf_event_paranoid=1` и аппаратные счётчики — на раннерах GitHub их нет |
   | JDK Mission Control 9.1 | открыть `.jfr` | flame graph и автоматический анализ в GUI | да |
 
-  Сэмплирование по CPU-времени (JEP 509) работает только на Linux; на Windows запись проходит без ошибок, но в ней 0 сэмплов. Подробности и выбор — [performance.md → «Профилирование»](performance.md#профилирование).
+  Сэмплирование по CPU-времени (JEP 509) работает только на Linux, и там без root; на Windows запись проходит без ошибок, но в ней 0 сэмплов. Аппаратные события async-profiler (`event=cycles`) без прав дают пустой профиль, а JMH всё равно завершается с кодом 0 — смотрите лог на `perf_event_open ... failed`. Строки Linux в таблице проверены на Xubuntu 26.04 и на раннере GitHub Actions; эту проверку повторяет workflow `profilers.yml` в репозитории скилла. Подробности и выбор — [performance.md → «Профилирование»](performance.md#профилирование).
 - Итог этапа — таблица: бенчмарк, медиана, разброс между прогонами, байт на операцию, топ горячих методов и мест аллокации из профиля.
 - Если ревью на этапе 8 нашло баги и код после исправления поменялся, базовую линию нужно снять заново.
 

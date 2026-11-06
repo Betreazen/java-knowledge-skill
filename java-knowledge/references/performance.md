@@ -510,7 +510,11 @@ java -jar target/benchmarks.jar "StringBench" -f 3 -wi 5 -w 1s -i 10 -r 1s \
 - async-profiler — лучший сэмплер для Linux и macOS. **Для Windows сборки нет**. На Windows: JFR + JMC, IntelliJ Profiler или VisualVM; либо профилируйте внутри WSL2 или Linux-контейнера.
 - Для агента без GUI: `jfr view` и `jfr print --json` дают текст, который удобно читать.
 - Добавляйте `-XX:+UnlockDiagnosticVMOptions -XX:+DebugNonSafepoints`, чтобы заинлайненные кадры приписывались правильно (помогает и JFR, и async-profiler).
-- Локально Linux не использовался: `-prof perfasm`, `perfnorm`, `perfc2c`, async-profiler и JEP 509 на Linux не запускались, их описание взято из документации.
+- Проверено на Linux (JDK 25.0.5, async-profiler 4.6, JMH 1.37; ноутбук на Xubuntu 26.04 с ядром 7.0 и раннер GitHub Actions на Ubuntu 24.04; в обоих случаях стандартный `kernel.perf_event_paranoid=4`, без root). Повторяется в CI репозитория скилла, workflow `profilers.yml`:
+  - async-profiler `event=cpu` и `event=alloc` работают и строят flame graph: без доступа к perf_events профайлер сам переходит на таймерный режим;
+  - async-profiler с аппаратным событием (`event=cycles`) без прав не работает, но JMH завершается с кодом 0. В логе только `[WARN] perf_event_open ... failed` и совет `sysctl kernel.perf_event_paranoid=1`, а профиль пуст. Проверяйте лог;
+  - JFR CPU-time (JEP 509) пишет сэмплы без root: около 600 событий `jdk.CPUTimeSample` за короткий прогон, `jfr view cpu-time-hot-methods` работает;
+  - `-prof perfnorm` и `-prof perfasm` падают с «Profilers failed to initialize». Им нужны `perf`, `perf_event_paranoid` ≤ 1 (`sudo sysctl kernel.perf_event_paranoid=1`) и аппаратные счётчики. На раннерах GitHub счётчиков нет даже после `sysctl` (`The cycles event is not supported`), поэтому perfnorm и perfasm там не работают вообще. Для них нужна физическая машина или VM с проброшенным PMU; для perfasm ещё и библиотека hsdis.
 
 ### Инструменты
 
@@ -520,7 +524,7 @@ java -jar target/benchmarks.jar "StringBench" -f 3 -wi 5 -w 1s -i 10 -r 1s \
 | JFR на живой JVM | `jcmd <pid> JFR.start name=r settings=profile` → `jcmd <pid> JFR.dump name=r filename=rec.jfr` → `jcmd <pid> JFR.stop name=r` | То же без перезапуска | да |
 | `jfr view` / `jcmd JFR.view` | `jfr view hot-methods rec.jfr`; `jcmd <pid> JFR.view hot-methods` (JDK 21+, без файла) | ~70 готовых текстовых отчётов | да (проверено локально) |
 | JFR method timing (JEP 520) | `-XX:StartFlightRecording:method-timing=::<clinit>,filename=clinit.jfr` → `jfr view method-timing clinit.jfr` | Время и число вызовов выбранных методов без агента | да (проверено локально) |
-| JFR CPU-time (JEP 509) | `-XX:StartFlightRecording=jdk.CPUTimeSample#enabled=true,filename=p.jfr` → `jfr view cpu-time-hot-methods p.jfr` | Настоящее CPU-время по таймеру ядра | **нет**: на Windows принимается молча и пишет 0 сэмплов (проверено локально) |
+| JFR CPU-time (JEP 509) | `-XX:StartFlightRecording=jdk.CPUTimeSample#enabled=true,filename=p.jfr` → `jfr view cpu-time-hot-methods p.jfr` | Настоящее CPU-время по таймеру ядра | **нет**: на Windows принимается молча и пишет 0 сэмплов (проверено локально); на Linux работает без root (проверено) |
 | JDK Mission Control 9.1.2 | GUI, открыть `.jfr` | Flame graph, автоматический анализ, страницы Threads, Locks, Allocations, GC | да |
 | async-profiler 4.6 | `asprof -d 30 -e cpu -f cpu.html <pid>` | Java + нативные + кадры ядра, без safepoint bias; cpu, wall, alloc, lock, nativemem | **нет**: только Linux и macOS (проверено локально) |
 | `jfrconv` | `jfrconv rec.jfr flame.html` | Flame graph из файла JFR | обычная Java-программа, на Windows должна работать `[не проверено]` |
@@ -553,7 +557,7 @@ java -jar target/benchmarks.jar "StringBench" -f 3 -wi 5 -w 1s -i 10 -r 1s \
 - Сэмплер с низкими накладными расходами без safepoint bias (perf_events или itimer + AsyncGetCallTrace и обход стека через vmstructs). Видит кадры Java, нативные и ядра, включая потоки GC и JIT.
 - События: `cpu`, `wall` (все потоки, включая спящие и заблокированные, — для задержки), `alloc` (профилирование аллокаций по TLAB), `lock` (конкурентные мониторы и блокировки j.u.c), `nativemem` (нативные утечки), `itimer`/`ctimer` (когда perf_events запрещён, например в контейнерах), аппаратные счётчики (`cache-misses` и др.).
 - Агентом: `-agentpath:/opt/ap/lib/libasyncProfiler.so=start,event=cpu,file=out.jfr`. Вывод: HTML flame graph, дерево, JFR, collapsed stacks, OTLP (4.6).
-- В контейнерах нужен `perf_event_paranoid` ≤ 1 или `--cap-add SYS_ADMIN`, иначе откат на `ctimer`/`itimer`.
+- Для perf_events нужен `perf_event_paranoid` ≤ 1 (в контейнере — ещё `--cap-add SYS_ADMIN` или `PERFMON`), иначе `cpu` откатывается на `ctimer`/`itimer`. В Ubuntu по умолчанию стоит 4, и откат происходит и на обычной машине; для `cpu`, `wall` и `alloc` этого достаточно, а аппаратные события (`cycles`, `cache-misses`) дают пустой профиль с предупреждением в логе (проверено на Linux).
 - В виде Maven-артефакта: ap-loader и `tools.profiler:async-profiler`.
 - С JMH: `-prof "async:libPath=/path/libasyncProfiler.so;output=flamegraph;event=cpu"` (или `event=alloc`) — самый короткий путь от «бенчмарк медленный» к «вот горячий кадр».
 
