@@ -1,5 +1,7 @@
 name: profilers
-# Проверяет сниппет JMH из performance.md и профайлеры, которые работают только на Linux.
+# Проверяет сниппет JMH из performance.md и утверждения справочника о профайлерах Linux:
+# async-profiler и JFR CPU-time sampling (JEP 509) работают без root при perf_event_paranoid=4,
+# а perfnorm/perfasm без доступа к аппаратным счётчикам не запускаются.
 on:
   workflow_dispatch:
   push:
@@ -39,8 +41,7 @@ jobs:
           done
           set +e
           java ../../java-knowledge/scripts/BenchCompare.java run1.json run2.json
-          code=$?
-          test "$code" -ne 2
+          test $? -ne 2
 
   linux-profilers:
     runs-on: ubuntu-latest
@@ -60,55 +61,33 @@ jobs:
       - name: Environment
         run: |
           uname -r
-          cat /etc/os-release | head -2
-          echo "perf_event_paranoid=$(cat /proc/sys/kernel/perf_event_paranoid) kptr_restrict=$(cat /proc/sys/kernel/kptr_restrict)"
-          which perf || echo "no perf"
+          grep PRETTY_NAME /etc/os-release
+          echo "perf_event_paranoid=$(cat /proc/sys/kernel/perf_event_paranoid)"
           java -version
       - name: Download async-profiler 4.6
         run: |
           curl -sL https://github.com/async-profiler/async-profiler/releases/download/v4.6/async-profiler-4.6-linux-x64.tar.gz | tar xz
           echo "AP=$PWD/async-profiler-4.6-linux-x64/lib/libasyncProfiler.so" >> "$GITHUB_ENV"
-      - name: async-profiler cpu, default kernel settings
-        continue-on-error: true
+      - name: async-profiler cpu flame graph without root
         run: |
-          java -jar target/benchmarks.jar $SHORT -prof "async:libPath=$AP;event=cpu;output=flamegraph;dir=prof-cpu" 2>&1 | tee cpu.log | grep -i -E 'warn|error|perf|ctimer|itimer|fall' || true
-          find prof-cpu -type f -exec ls -la {} \;
-      - name: async-profiler alloc
-        continue-on-error: true
+          java -jar target/benchmarks.jar demo.JoinBench.concat $SHORT -prof "async:libPath=$AP;event=cpu;output=flamegraph;dir=prof-cpu" > cpu.log 2>&1
+          ls -la prof-cpu/*/flame-cpu-forward.html
+          grep -q 'JoinBench' prof-cpu/*/flame-cpu-forward.html
+      - name: async-profiler allocation profile without root
         run: |
-          java -jar target/benchmarks.jar $SHORT -prof "async:libPath=$AP;event=alloc;output=collapsed;dir=prof-alloc" 2>&1 | grep -i -E 'warn|error' || true
-          find prof-alloc -type f -exec wc -l {} \;
-      - name: JFR CPU-time sampling (JEP 509)
-        continue-on-error: true
+          java -jar target/benchmarks.jar demo.JoinBench.concat $SHORT -prof "async:libPath=$AP;event=alloc;output=collapsed;dir=prof-alloc" > alloc.log 2>&1
+          head -c 600 prof-alloc/*/collapsed-alloc.csv; echo
+          test -s prof-alloc/*/collapsed-alloc.csv
+      - name: JFR CPU-time sampling (JEP 509) records samples on Linux
         run: |
           java -jar target/benchmarks.jar demo.JoinBench.concat $SHORT -jvmArgsAppend "-XX:StartFlightRecording=jdk.CPUTimeSample#enabled=true,filename=$PWD/cpu.jfr" > jfr.log 2>&1
-          tail -3 jfr.log
-          jfr summary cpu.jfr | grep -i -E 'CPUTimeSample|ExecutionSample'
-          jfr view cpu-time-hot-methods cpu.jfr | head -12
-      - name: perfasm and perfnorm, default kernel settings
-        continue-on-error: true
+          jfr summary cpu.jfr | grep -E 'CPUTimeSample|ExecutionSample'
+          jfr view cpu-time-hot-methods cpu.jfr | head -8
+          samples=$(jfr summary cpu.jfr | awk '$1 == "jdk.CPUTimeSample" {print $2}')
+          test "${samples:-0}" -gt 0
+      - name: perfnorm needs hardware counters (absent on hosted runners)
         run: |
-          java -jar target/benchmarks.jar demo.JoinBench.builder $SHORT -prof perfnorm 2>&1 | grep -i -E 'error|cannot|fail|perf|cycles|instructions' | head -8
-          java -jar target/benchmarks.jar demo.JoinBench.builder $SHORT -prof perfasm 2>&1 | grep -i -E 'error|cannot|fail|perf|hsdis' | head -8
-      - name: Allow perf events and install perf
-        continue-on-error: true
-        run: |
-          sudo sysctl -w kernel.perf_event_paranoid=1 kernel.kptr_restrict=0
-          sudo apt-get update -qq
-          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq "linux-tools-$(uname -r)" linux-tools-common > /dev/null || sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq linux-tools-generic > /dev/null
-          which perf && perf --version
-      - name: Hardware counters available?
-        continue-on-error: true
-        run: |
-          perf stat -e cycles,instructions true 2>&1 | tail -8
-          perf stat -e task-clock true 2>&1 | tail -5
-      - name: perfnorm and perfasm after enabling perf
-        continue-on-error: true
-        run: |
-          java -jar target/benchmarks.jar demo.JoinBench.builder $SHORT -prof perfnorm 2>&1 | grep -v WARNING | tail -25
-          java -jar target/benchmarks.jar demo.JoinBench.builder $SHORT -prof perfasm 2>&1 | grep -v WARNING | grep -v '^\s*$' | head -60
-      - name: async-profiler cpu after enabling perf
-        continue-on-error: true
-        run: |
-          java -jar target/benchmarks.jar $SHORT -prof "async:libPath=$AP;event=cpu;output=flamegraph;dir=prof-cpu2" 2>&1 | grep -i -E 'warn|error' || true
-          find prof-cpu2 -type f -exec ls -la {} \;
+          set +e
+          out=$(java -jar target/benchmarks.jar demo.JoinBench.builder $SHORT -prof perfnorm 2>&1)
+          echo "$out" | grep -v WARNING | tail -8
+          echo "$out" | grep -q 'Profilers failed to initialize'
