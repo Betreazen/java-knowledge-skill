@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+# Бенчмарк серверной логики Minecraft командой /tick sprint (Minecraft 1.20.3+, в том числе 26.x, Paper).
+# Запускает сервер, ставит принудительную загрузку чанков вокруг 0,0, N раз выполняет
+# «tick sprint <ticks>» и пишет результат в формате JMH JSON, который читает BenchCompare.java.
+#
+# Запуск из папки сервера (там лежат server.jar, eula.txt, мир с фиксированным seed и ваши моды или плагины):
+#   bash tick_sprint_bench.sh <server.jar> <out.json> [runs=5] [ticks=1200] [radius_blocks=64] [name=world]
+# Сравнение «до» и «после»: java BenchCompare.java bench/before bench/after
+#
+# Строку результата сервер печатает так (язык en_us):
+#   Sprint completed with 1834.2 ticks per second, or 0.55 ms per tick
+# Метрика — ms per tick (меньше — лучше), поэтому в JSON режим avgt.
+# Один прогон скрипта — один запуск JVM: первые спринты включают прогрев JIT, поэтому первый
+# спринт отбрасывается, а оценкой берётся медиана остальных.
+set -euo pipefail
+JAR=${1:?server jar}
+OUT=${2:?output json}
+RUNS=${3:-5}
+TICKS=${4:-1200}
+R=${5:-64}
+NAME=${6:-world}
+
+LOG=$(mktemp)
+trap 'rm -f "$LOG"' EXIT
+
+wait_for() { # pattern, occurrence number
+    until [ "$(grep -c -- "$1" "$LOG" || true)" -ge "$2" ]; do sleep 1; done
+}
+
+timeout 1800 java -Xms2G -Xmx2G -jar "$JAR" --nogui > "$LOG" 2>&1 < <(
+    wait_for 'Done (' 1
+    echo "forceload add -$R -$R $((R - 1)) $((R - 1))"
+    sleep 5
+    for i in $(seq 0 "$RUNS"); do   # прогон 0 — прогрев
+        echo "tick sprint $TICKS"
+        wait_for 'Sprint completed' $((i + 1))
+    done
+    echo stop
+)
+
+mapfile -t ms < <(grep -o 'or [0-9.]* ms per tick' "$LOG" | awk '{print $2}' | tail -n +2)
+if [ "${#ms[@]}" -lt 1 ]; then
+    echo "no 'Sprint completed' lines in the server log" >&2
+    tail -40 "$LOG" >&2
+    exit 1
+fi
+printf '%s\n' "${ms[@]}" | sort -g | awk -v name="$NAME" -v ticks="$TICKS" -v r="$R" '
+    { v[NR] = $1 }
+    END {
+        n = NR
+        med = (n % 2) ? v[(n + 1) / 2] : (v[n / 2] + v[n / 2 + 1]) / 2
+        printf "[{\"benchmark\": \"tick_sprint.%s\", \"mode\": \"avgt\", ", name
+        printf "\"params\": {\"ticks\": \"%s\", \"forceload_radius\": \"%s\"}, ", ticks, r
+        printf "\"primaryMetric\": {\"score\": %s, \"scoreError\": \"NaN\", ", med
+        printf "\"scoreConfidence\": [%s, %s], \"scoreUnit\": \"ms/tick\"}}]\n", v[1], v[n]
+    }' > "$OUT"
+echo "sprints (ms per tick): ${ms[*]}"
+cat "$OUT"

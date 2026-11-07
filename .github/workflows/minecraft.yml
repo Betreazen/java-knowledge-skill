@@ -31,6 +31,15 @@ jobs:
       - name: Start Paper 26.3 with the plugin
         working-directory: .
         run: bash tests/minecraft/paper_smoke.sh
+      - name: World benchmark with /tick sprint, compared by BenchCompare
+        working-directory: tests/minecraft/paper-plugin/run
+        run: |
+          S=../../../../java-knowledge/scripts
+          bash $S/tick_sprint_bench.sh paper.jar a.json 3 400 64 paper
+          bash $S/tick_sprint_bench.sh paper.jar b.json 3 400 64 paper
+          set +e
+          java $S/BenchCompare.java a.json b.json
+          test $? -ne 2
 
   velocity-plugin:
     runs-on: ubuntu-latest
