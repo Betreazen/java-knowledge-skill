@@ -4,14 +4,15 @@
 # «tick sprint <ticks>» и пишет результат в формате JMH JSON, который читает BenchCompare.java.
 #
 # Запуск из папки сервера (там лежат server.jar, eula.txt, мир с фиксированным seed и ваши моды или плагины):
-#   bash tick_sprint_bench.sh <server.jar> <out.json> [runs=5] [ticks=1200] [radius_blocks=64] [name=world]
+#   bash tick_sprint_bench.sh <server.jar> <out.json> [runs=5] [ticks=1200] [radius_blocks=64] [name=world] [warmup=2]
 # Сравнение «до» и «после»: java BenchCompare.java bench/before bench/after
 #
 # Строку результата сервер печатает так (язык en_us):
 #   Sprint completed with 1834.2 ticks per second, or 0.55 ms per tick
 # Метрика — ms per tick (меньше — лучше), поэтому в JSON режим avgt.
-# Один прогон скрипта — один запуск JVM: первые спринты включают прогрев JIT, поэтому первый
-# спринт отбрасывается, а оценкой берётся медиана остальных.
+# Один прогон скрипта — один запуск JVM: первые спринты включают прогрев JIT, поэтому первые
+# warmup спринтов отбрасываются, а оценкой берётся медиана остальных. В проверке на Paper 26.3 второй
+# спринт ещё шёл медленнее остальных, поэтому по умолчанию прогрев — 2 спринта.
 set -euo pipefail
 JAR=${1:?server jar}
 OUT=${2:?output json}
@@ -19,6 +20,7 @@ RUNS=${3:-5}
 TICKS=${4:-1200}
 R=${5:-64}
 NAME=${6:-world}
+WARMUP=${7:-2}
 
 LOG=$(mktemp)
 trap 'rm -f "$LOG"' EXIT
@@ -31,14 +33,14 @@ timeout 1800 java -Xms2G -Xmx2G -jar "$JAR" --nogui > "$LOG" 2>&1 < <(
     wait_for 'Done (' 1
     echo "forceload add -$R -$R $((R - 1)) $((R - 1))"
     sleep 5
-    for i in $(seq 0 "$RUNS"); do   # прогон 0 — прогрев
+    for i in $(seq 1 $((WARMUP + RUNS))); do
         echo "tick sprint $TICKS"
-        wait_for 'Sprint completed' $((i + 1))
+        wait_for 'Sprint completed' "$i"
     done
     echo stop
 )
 
-mapfile -t ms < <(grep -o 'or [0-9.]* ms per tick' "$LOG" | awk '{print $2}' | tail -n +2)
+mapfile -t ms < <(grep -o 'or [0-9.]* ms per tick' "$LOG" | awk '{print $2}' | tail -n +$((WARMUP + 1)))
 if [ "${#ms[@]}" -lt 1 ]; then
     echo "no 'Sprint completed' lines in the server log" >&2
     tail -40 "$LOG" >&2

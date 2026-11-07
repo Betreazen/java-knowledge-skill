@@ -11,3 +11,5 @@ target/
 build/
 .gradle/
 dependency-reduced-pom.xml
+/tests/minecraft/neoforge-mod/src/main/resources/data/examplemod/structure/
+/tests/minecraft/paper-plugin/run/

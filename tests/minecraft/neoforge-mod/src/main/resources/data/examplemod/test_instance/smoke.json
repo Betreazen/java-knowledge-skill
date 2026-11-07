@@ -1,0 +1,7 @@
+{
+  "type": "minecraft:function",
+  "function": "examplemod:smoke",
+  "environment": "minecraft:default",
+  "structure": "examplemod:empty",
+  "max_ticks": 100
+}
