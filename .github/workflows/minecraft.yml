@@ -75,6 +75,17 @@ jobs:
       - name: Version expanded in fabric.mod.json
         run: |
           unzip -p build/libs/examplemod-1.0.0.jar fabric.mod.json | grep '"version": "1.0.0"'
+      - name: Fabric server with the mod, /tick sprint benchmark
+        run: |
+          mkdir -p srv/mods
+          cp build/libs/examplemod-1.0.0.jar srv/mods/
+          curl -sfL -o srv/mods/fabric-api.jar 'https://maven.fabricmc.net/net/fabricmc/fabric-api/fabric-api/0.165.2+26.3/fabric-api-0.165.2+26.3.jar'
+          curl -sfL -o srv/fabric-server-launch.jar 'https://meta.fabricmc.net/v2/versions/loader/26.3/0.20.1/1.1.2/server/jar'
+          cd srv
+          echo eula=true > eula.txt
+          bash ../../../../java-knowledge/scripts/tick_sprint_bench.sh 'java -Xmx2G -jar fabric-server-launch.jar nogui' a.json 3 400 64 fabric
+          grep -E 'examplemod|Example mod initialised' logs/latest.log | head -5
+          grep -q 'Example mod initialised' logs/latest.log
       - name: A broken assertion must fail the gametest run
         run: |
           sed -i 's/block == Blocks.DIAMOND_BLOCK/block == Blocks.GOLD_BLOCK/' src/gametest/java/com/example/test/ExampleModGameTest.java
@@ -103,6 +114,16 @@ jobs:
           sed -i 's/block == Blocks.DIAMOND_BLOCK/block == Blocks.GOLD_BLOCK/' src/main/java/com/example/examplemod/ExampleMod.java
           if ./gradlew runGameTestServer; then echo 'gametest did not fail'; exit 1; fi
           git checkout -- src/main/java/com/example/examplemod/ExampleMod.java
+      - name: NeoForge server with the mod, /tick sprint benchmark
+        run: |
+          mkdir -p srv/mods
+          find build/libs -name '*.jar' ! -name '*-sources.jar' -exec cp {} srv/mods/ \;
+          cd srv
+          curl -sfL -o installer.jar https://maven.neoforged.net/releases/net/neoforged/neoforge/26.3.0.101/neoforge-26.3.0.101-installer.jar
+          java -jar installer.jar --installServer > install.log 2>&1 || { tail -20 install.log; exit 1; }
+          echo eula=true > eula.txt
+          bash ../../../../java-knowledge/scripts/tick_sprint_bench.sh 'bash run.sh nogui' a.json 3 400 64 neoforge
+          grep -i -E 'examplemod' logs/latest.log | head -5
       - name: mods.toml expanded in the jar
         run: unzip -p build/libs/*.jar META-INF/neoforge.mods.toml | head -20
       - if: always()

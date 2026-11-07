@@ -17,17 +17,22 @@ curl -sfL -o paper.jar "$url"
 echo "$sha  paper.jar" | sha256sum -c -
 echo "eula=true" > eula.txt
 
-# stdin сервера: ждём строку «Done (» в логе и отправляем stop
+# stdin сервера: ждём строку «Done (» в логе, выполняем команду плагина с консоли и отправляем stop.
+# Команда зарегистрирована в bootstrapper, а MockBukkit bootstrapper не запускает, поэтому проверяем её здесь:
+# зарегистрированная команда отвечает «No player was found», незарегистрированная — «Unknown or incomplete command».
 touch server.log
 timeout 600 java -Xms1G -Xmx2G -jar paper.jar --nogui > server.log 2>&1 < <(
     until grep -q 'Done (' server.log; do sleep 2; done
+    echo "visits reset Nobody"
+    sleep 3
     echo stop
 ) || { echo "server did not stop in time"; tail -50 server.log; exit 1; }
 
-grep -E 'Enabling ExamplePlugin|Done \(' server.log
-if grep -q 'Error occurred while enabling ExamplePlugin\|Could not load plugin' server.log; then
+grep -E 'Enabling ExamplePlugin|Done \(|No player was found|Unknown or incomplete command' server.log
+if grep -q 'Error occurred while enabling ExamplePlugin\|Could not load plugin\|Unknown or incomplete command' server.log; then
     tail -80 server.log
     exit 1
 fi
 grep -q 'Enabling ExamplePlugin' server.log
+grep -q 'No player was found' server.log
 echo "paper smoke test passed"
