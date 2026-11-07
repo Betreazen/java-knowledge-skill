@@ -714,7 +714,7 @@ String describe(PaymentResult r) {
 
 **Ключевые выводы**
 
-- Названия правил: Error Prone (EP) — с errorprone.info/bugpatterns, «exp» означает experimental и выключено по умолчанию; PMD 7; SpotBugs/FSB (Find Security Bugs). **ID правил Sonar взяты по памяти и вторичным источникам и помечены `[не проверено]`**: сверяйте на rules.sonarsource.com перед публикацией (сайт не загрузился при проверке, это JS-приложение, curl его не читает).
+- Названия правил: Error Prone (EP) — с errorprone.info/bugpatterns, «exp» означает experimental и выключено по умолчанию; PMD 7; SpotBugs/FSB (Find Security Bugs). **ID правил Sonar взяты по памяти и вторичным источникам и помечены `[не проверено]`**: сверяйте в каталоге [SonarQube Rules](https://www.sonarsource.com/products/sonarqube/rules/) перед публикацией. Прежний каталог rules.sonarsource.com перенаправляет туда, а его адреса вида `/java/` отдают 404.
 - Столбец «правило анализатора» собирает EP / SpotBugs-FSB / PMD / Sonar в одну ячейку; «—» значит, что такого правила среди проверенных нет.
 
 | Антипаттерн | Чем плох | Правило анализатора | Что вместо |
@@ -761,7 +761,7 @@ String describe(PaymentResult r) {
 | [Error Prone Bug Patterns](https://errorprone.info/bugpatterns) | Google | Полный каталог Error Prone |
 | [SpotBugs Bug Descriptions](https://spotbugs.readthedocs.io/en/latest/bugDescriptions.html) | SpotBugs | Описания багов SpotBugs |
 | [PMD Java Rules](https://pmd.github.io/pmd/pmd_rules_java.html) | PMD | Индекс правил PMD 7 для Java |
-| [Java static code analysis (Sonar rules)](https://rules.sonarsource.com/java/) | SonarSource | Правила Sonar для Java `[не проверено]`: ID выше не подтверждены, сайт — JS-приложение, curl его не читает |
+| [SonarQube Rules](https://www.sonarsource.com/products/sonarqube/rules/) ([раздел Java](https://www.sonarsource.com/knowledge/languages/java/)) | SonarSource | Каталог правил Sonar; прежний каталог rules.sonarsource.com перенаправляет сюда, а адрес `/java/` отдаёт 404. ID правил выше `[не проверено]` |
 | [NullAway](https://github.com/uber/NullAway) | Uber | Контроль null-безопасности |
 | [Code Smells (Refactoring Guru)](https://refactoring.guru/refactoring/smells) | Shvets | Соответствие smell → рефакторинг |
 
@@ -864,7 +864,7 @@ String describe(PaymentResult r) {
 
 ## Что перепроверить
 
-- ID правил Sonar в таблице антипаттернов: rules.sonarsource.com не загрузился, ID взяты по памяти. Проверьте каждый перед публикацией.
+- ID правил Sonar в таблице антипаттернов взяты по памяти: старый каталог rules.sonarsource.com больше не открывается, а новый на sonarsource.com их не подтвердил. Проверьте каждый перед публикацией.
 - Получат ли Lazy Constants или примитивные паттерны JEP в JDK 28 до Rampdown Phase One (2026-12-03).
 - Точное содержимое `jaxp-strict.properties.template` и изменение умолчания JDK 24 для расширяющих функций XSLT/XPath.
 - Номер релиза, в котором изменено умолчание annotation processing: поведение на JDK 25 проверено локально (см. таблицу устареваний), ссылка на release note JDK 23 остаётся `[не проверено]`.
