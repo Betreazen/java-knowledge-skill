@@ -214,7 +214,7 @@
 | [Paper Javadocs](https://jd.papermc.io/paper/) | PaperMC | Справочник API |
 | [Velocity developer docs](https://docs.papermc.io/velocity/dev/) | PaperMC | Плагины прокси |
 | [Folia docs](https://docs.papermc.io/folia/) | PaperMC | Правила регионального многопоточия |
-| [The future of Paper — Hard fork](https://forums.papermc.io/threads/the-future-of-paper-hard-fork.1451/) | PaperMC, 2024-12-13 | Почему компилировать против paper-api (тред форума не открывался: 522; дата по papermc.io/news) `[не проверено]` |
+| [The future of Paper — Hard fork](https://papermc.io/news/the-future-of-paper-hard-fork/) | PaperMC, 2024-12-13 | Почему компилировать против Paper-API и переходить на paperweight-userdev; форк действует с 1.21.4. Тред на forums.papermc.io с тем же объявлением отвечает 522, ссылка дана на новость |
 | [Spigot plugin development wiki](https://www.spigotmc.org/wiki/spigot-plugin-development/) | SpigotMC | Основы Bukkit (наследие) |
 | [Spigot Javadocs](https://hub.spigotmc.org/javadocs/spigot/) | SpigotMC | API Bukkit/Spigot |
 | [Minecraft Wiki — Data component format](https://minecraft.wiki/w/Data_component_format) | Сообщество, 2026 | Компоненты предметов (1.20.5+) |
@@ -800,7 +800,7 @@
 - **Статистика CurseForge** (доля загрузчиков, принятие версий, топ модов) не собрана: API CurseForge требует ключ, сайт отвечал 403. Числа раздела 5 — только Modrinth, они завышают долю Fabric.
 - **Русские видеоуроки** по Fabric, NeoForge, Paper (YouTube, VK, Rutube) не найдены и не проверены. Подтверждены только статьи Habr, русские Fabric Docs и вики, форум mcmodding.ru. Статус RuBukkit неизвестен (403).
 - **Статьи minecraft.net** (анонс об обфускации, журналы изменений 26.x) не открывались с проверяющей машины. Содержание взято из сниппетов поиска и Minecraft Wiki. Точная дата публикации статьи об обфускации не прочитана.
-- **Тред о жёстком форке Paper на forums.papermc.io** не открывался (ответ 522). Дата анонса, 2024-12-13, и начало действия с 1.21.4 прочитаны в первоисточнике: papermc.io/news/the-future-of-paper-hard-fork.
+- **Тред о жёстком форке Paper на forums.papermc.io** не открывался (ответ 522), поэтому в таблице ссылка на новость papermc.io/news/the-future-of-paper-hard-fork. Дата анонса, 2024-12-13, начало действия с 1.21.4 и совет собирать плагины против Paper-API прочитаны в ней.
 - **Год 2-го издания Sams «Mod Development in 24 Hours»** (2016?) и **2-го издания Cadenhead** (год, Bukkit или Spigot) взяты из каталожных сниппетов, не со страниц издателей.
 - **Раздел 26.2 вики McJty** и **видеопокрытие 26.x у TurtyWurty** известны из вторичных источников (интервью, описания репозиториев). Плейлисты не открывались.
 - **Mekanism на 26.x:** ветка по умолчанию на GitHub нацелена на 26.3, но старший выпуск на Modrinth 1.21.1. Неясно, выпущены ли сборки 26.x (возможно, только CurseForge или не выпущены).

@@ -24,14 +24,15 @@ public class EmptyStructure {
     private static final byte LIST = 9;
     private static final byte COMPOUND = 10;
 
+    private static final String USAGE = "usage: java EmptyStructure.java <out.nbt> [dataVersion=5023] [size=3]";
+
     public static void main(String[] args) throws IOException {
         if (args.length < 1) {
-            System.err.println("usage: java EmptyStructure.java <out.nbt> [dataVersion=5023] [size=3]");
-            System.exit(2);
+            usage("missing output file");
         }
         Path out = Path.of(args[0]);
-        int dataVersion = args.length > 1 ? Integer.parseInt(args[1]) : 5023;
-        int size = args.length > 2 ? Integer.parseInt(args[2]) : 3;
+        int dataVersion = args.length > 1 ? positiveInt(args[1], "dataVersion") : 5023;
+        int size = args.length > 2 ? positiveInt(args[2], "size") : 3;
         if (out.getParent() != null) {
             Files.createDirectories(out.getParent());
         }
@@ -68,6 +69,25 @@ public class EmptyStructure {
             nbt.writeByte(END);
         }
         System.out.println("wrote " + out + " (" + size + "x" + size + "x" + size + ", DataVersion " + dataVersion + ")");
+    }
+
+    private static int positiveInt(String value, String what) {
+        try {
+            int n = Integer.parseInt(value);
+            if (n > 0) {
+                return n;
+            }
+        } catch (NumberFormatException e) {
+            // ниже — то же сообщение, что и для нуля или отрицательного числа
+        }
+        usage(what + " must be a positive integer, got: " + value);
+        return 0; // недостижимо: usage завершает процесс
+    }
+
+    private static void usage(String problem) {
+        System.err.println(problem);
+        System.err.println(USAGE);
+        System.exit(2);
     }
 
     private static void emptyList(DataOutputStream nbt, String name) throws IOException {
