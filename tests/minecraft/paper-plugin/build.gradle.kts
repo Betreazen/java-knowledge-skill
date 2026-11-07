@@ -14,6 +14,8 @@ repositories {
 dependencies {
     // Pin for reproducible CI; use "26.3.build.+" to track latest (never "latest.release": metadata <latest> is 26.3-pre-2.build.0-alpha)
     compileOnly("io.papermc.paper:paper-api:26.3.build.244-stable")
+    // compileOnly does not reach the test classpath, and MockBukkit does not bring paper-api itself
+    testImplementation("io.papermc.paper:paper-api:26.3.build.244-stable")
     testImplementation("org.mockbukkit.mockbukkit:mockbukkit-v26.3:4.119.0")
     testImplementation(platform("org.junit:junit-bom:6.1.3"))
     testImplementation("org.junit.jupiter:junit-jupiter")
