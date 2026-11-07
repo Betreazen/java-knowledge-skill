@@ -7,9 +7,17 @@ on:
     paths:
       - 'tests/minecraft/**'
       - '.github/workflows/minecraft.yml'
+      # скрипты навыка, которые этот workflow запускает на настоящих серверах
+      - 'java-knowledge/scripts/tick_sprint_bench.sh'
+      - 'java-knowledge/scripts/EmptyStructure.java'
+      - 'java-knowledge/scripts/BenchCompare.java'
   pull_request:
     paths:
       - 'tests/minecraft/**'
+      - '.github/workflows/minecraft.yml'
+      - 'java-knowledge/scripts/tick_sprint_bench.sh'
+      - 'java-knowledge/scripts/EmptyStructure.java'
+      - 'java-knowledge/scripts/BenchCompare.java'
 permissions:
   contents: read
 
