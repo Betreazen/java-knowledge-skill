@@ -1,6 +1,6 @@
 ---
 name: java-knowledge
-description: Knowledge base and workflow for Java and the JVM in any domain — libraries, backends (Spring Boot, Quarkus, Micronaut), JDBC/JPA, Kafka, CLI, JavaFX, Spark, ML/LLM apps, games (libGDX, LWJGL), embedded. Use for any question about Java code, even one that looks quick to answer from memory: writing or reviewing Java; javac errors (incompatible bounds, cannot find symbol) and exceptions (ConcurrentModificationException); records, sealed types, pattern matching, streams; JDK versions and JEPs; Maven or Gradle builds, Lombok/MapStruct that stopped running; Error Prone, NullAway, SpotBugs, Spotless; JUnit, Mockito, Testcontainers, JaCoCo; slow code, hot profiler frames, allocations, GC pauses, slow startup; JMH, JFR, async-profiler; hangs and deadlocks, virtual threads, CompletableFuture, commonPool, Java Memory Model, FFM API; multi-module structure, JPMS; Java books. Includes a curated library with links, verified toolchain templates and a pipeline with JMH, review and measured optimization.
+description: Knowledge base and workflow for Java and the JVM in any domain — libraries, backends (Spring Boot, Quarkus, Micronaut), JDBC/JPA, Kafka, CLI, JavaFX, Spark, ML/LLM apps, games (libGDX, LWJGL), Minecraft mods/plugins (Fabric, NeoForge, Paper, mixins), embedded. Use for any question about Java code, even one that looks quick to answer from memory: writing or reviewing Java; javac errors (incompatible bounds, cannot find symbol) and exceptions (ConcurrentModificationException); records, sealed types, pattern matching, streams; JDK versions and JEPs; Maven or Gradle builds, Lombok/MapStruct that stopped running; Error Prone, NullAway, SpotBugs, Spotless; JUnit, Mockito, Testcontainers, JaCoCo; slow code, hot profiler frames, allocations, GC pauses, slow startup; JMH, JFR, async-profiler; hangs and deadlocks, virtual threads, CompletableFuture, commonPool, Java Memory Model, FFM API; multi-module structure, JPMS; Java books. Includes a curated library, CI-verified templates and a measured optimization pipeline.
 ---
 
 # Java: библиотека знаний и пайплайн
@@ -11,7 +11,7 @@ description: Knowledge base and workflow for Java and the JVM in any domain — 
 2. **Тулчейн.** Какие JDK, инструменты сборки и анализаторы ставить, какие команды запускать и в каком порядке. Шаблоны `pom.xml`, Gradle и CI собраны и проверены.
 3. **Пайплайн.** Порядок работы: тесты до кода, проверки качества, бенчмарки JMH, ревью, поиск решений в библиотеке и повторный замер.
 
-Состояние знаний — ноябрь 2026: JDK 27 (сентябрь 2026) — последний релиз, JDK 25 — текущий LTS, JDK 21 и 17 — предыдущие LTS, JDK 28 выйдет в марте 2027. Maven 3.9.16 и 3.10.0 (Maven 4 всё ещё RC), Gradle 9.8, JUnit 6.1, Spring Boot 4.1, Quarkus 3.40, JMH 1.37.
+Состояние знаний — ноябрь 2026: JDK 27 (сентябрь 2026) — последний релиз, JDK 25 — текущий LTS, JDK 21 и 17 — предыдущие LTS, JDK 28 выйдет в марте 2027. Maven 3.9.16 и 3.10.0 (Maven 4 всё ещё RC), Gradle 9.9, JUnit 6.1, Spring Boot 4.1, Quarkus 3.40, JMH 1.37. Minecraft: 26.3 — последний релиз (сентябрь 2026), 26.4 в снапшотах; с 26.1 игра без обфускации и требует Java 25.
 
 ## Куда смотреть
 
@@ -27,6 +27,16 @@ description: Knowledge base and workflow for Java and the JVM in any domain — 
 | Серверные области: Spring Boot, Quarkus, Micronaut, Helidon, REST и gRPC, JDBC, JPA и Hibernate, миграции, Kafka, наблюдаемость, безопасность, контейнеры и Kubernetes | [references/domains-server.md](references/domains-server.md) |
 | Прочие области: публикация библиотек, CLI и TUI, десктоп, данные, ML и LLM-приложения, игры, embedded, WebAssembly, interop, скрипты | [references/domains-client.md](references/domains-client.md) |
 | Что почитать, блоги, доклады, подкасты, курсы, русскоязычные ресурсы, маршрут обучения по уровням | [references/books.md](references/books.md). На общий вопрос о книгах начните с разделов [«Короткий список: 20 главных источников»](references/books.md#короткий-список-20-главных-источников) и [«Маршрут чтения по уровням»](references/books.md#маршрут-чтения-по-уровням), тематические разделы открывайте по оглавлению. Файл большой, целиком его не читайте |
+
+**Ветвь Minecraft** (Java Edition: моды и серверные плагины, Minecraft 26.x и последняя 1.21.x):
+
+| Задача | Файл |
+| --- | --- |
+| Начать мод: выбор загрузчика (Fabric, NeoForge, Forge, Quilt), версии игры и Java, Loom и ModDevGradle, мульти-загрузчик и мульти-версия, публикация на Modrinth и CurseForge, сборки модпаков, CI, проверенные шаблоны | [references/minecraft-modding.md](references/minecraft-modding.md) |
+| Код мода: стороны и потоки, реестры, компоненты данных, блоки, сущности, датаген, кодеки, сеть, события, миксины, access wideners и transformers, рендер, конфиги, генерация мира, перенос на новую версию, чеклист ревью | [references/minecraft-mod-api.md](references/minecraft-mod-api.md) — что сломалось в 26.x, смотрите в разделе [«Что сломалось в 26.x»](references/minecraft-mod-api.md#что-сломалось-в-26x) |
+| Лаги, TPS и MSPT, FPS, память, медленный старт; spark и JFR; бенчмарк мира `/tick sprint`; GameTest и юнит-тесты; разбор краш-репортов и конфликтов модов | [references/minecraft-performance-testing.md](references/minecraft-performance-testing.md) — начните с таблицы «Симптом → техника → источник» |
+| Сервер: датапак, плагин или мод; Paper, Folia, Velocity, Spigot, Sponge, Minestom; Polymer; Geyser и ViaVersion; инженерия и шаблоны плагинов | [references/minecraft-server-plugins.md](references/minecraft-server-plugins.md) |
+| Документация и её свежесть, как читать старые туториалы, курсы, эталонные моды по типам, сообщество, маршрут обучения | [references/minecraft-resources.md](references/minecraft-resources.md) |
 
 Каждый справочник начинается с оглавления. Читайте только нужный раздел, а не файл целиком.
 
@@ -46,8 +56,19 @@ description: Knowledge base and workflow for Java and the JVM in any domain — 
 | Медленный эндпоинт, N+1, пул соединений | [domains-server.md → «Производительность сервера: симптомы»](references/domains-server.md#9-производительность-сервера-симптомы) |
 | Как разложить проект на модули и закрепить границы | [architecture.md → «Короткие правила по умолчанию»](references/architecture.md#короткие-правила-по-умолчанию) |
 | Существует ли книга или издание | [books.md → «Что вышло, что в раннем доступе и чего не существует»](references/books.md#что-вышло-что-в-раннем-доступе-и-чего-не-существует) |
+| Minecraft: с чего начать мод, готовый проект с GameTest и CI | [minecraft-modding.md → «Шаблоны»](references/minecraft-modding.md#шаблоны), выбор загрузчика — [«Стек по умолчанию»](references/minecraft-modding.md#стек-по-умолчанию) |
+| Minecraft: старый туториал или мод не собирается на 26.x (`modImplementation`, `remapJar`, `ResourceLocation`, Yarn) | [minecraft-modding.md → «Что в старых туториалах неверно»](references/minecraft-modding.md#что-в-старых-туториалах-неверно), [minecraft-mod-api.md → «Что сломалось в 26.x»](references/minecraft-mod-api.md#что-сломалось-в-26x) |
+| Minecraft: сервер лагает (MSPT, TPS), как найти причину и доказать, что исправление помогло | [minecraft-performance-testing.md → «Симптом → техника → источник»](references/minecraft-performance-testing.md#симптом--техника--источник), порядок работы — [pipeline.md → «Моды и плагины Minecraft»](references/pipeline.md#моды-и-плагины-minecraft) |
+| Minecraft: датапак, плагин или мод; плагин Paper с нуля | [minecraft-server-plugins.md → «Что выбрать: датапак, плагин или мод»](references/minecraft-server-plugins.md#что-выбрать-датапак-плагин-или-мод), [«Шаблоны»](references/minecraft-server-plugins.md#шаблоны) |
 
 Скрипт [scripts/BenchCompare.java](scripts/BenchCompare.java) сравнивает прогоны JMH «до» и «после» по их JSON с учётом шума между прогонами и возвращает код 1 при регрессии. Запуск без сборки: `java BenchCompare.java <до> <после>` на JDK 17+. Он нужен на этапе 11 пайплайна.
+
+Для Minecraft есть ещё два скрипта:
+
+- [scripts/tick_sprint_bench.sh](scripts/tick_sprint_bench.sh) — бенчмарк сервера целиком командой `/tick sprint`. Результат пишется в формате JMH JSON, поэтому его сравнивает тот же `BenchCompare.java`;
+- [scripts/EmptyStructure.java](scripts/EmptyStructure.java) — пустая структура `.nbt` для GameTest. Нужна на NeoForge, где своей пустой структуры нет.
+
+Скрипты лежат в папке `scripts/` рядом с этим `SKILL.md`. При установке для всех проектов это `~/.claude/skills/java-knowledge/scripts/`, при установке в проект — `.claude/skills/java-knowledge/scripts/`. Подставляйте этот путь в команды из справочников.
 
 ## Как работать
 

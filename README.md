@@ -1,6 +1,6 @@
 # java-knowledge
 
-Agent Skill для разработки на Java в любой области: библиотеки для Maven Central, веб-бэкенды и микросервисы (Spring Boot, Quarkus, Micronaut, Helidon), базы данных и очереди, CLI и TUI, десктоп, обработка данных, ML и LLM-приложения, игры, embedded, WebAssembly.
+Agent Skill для разработки на Java в любой области: библиотеки для Maven Central, веб-бэкенды и микросервисы (Spring Boot, Quarkus, Micronaut, Helidon), базы данных и очереди, CLI и TUI, десктоп, обработка данных, ML и LLM-приложения, игры, embedded, WebAssembly. Отдельная ветвь — моды и серверные плагины Minecraft Java Edition (Fabric, NeoForge, Paper, Velocity).
 
 Скилл даёт ИИ-агенту (Claude Code, claude.ai и другим инструментам с поддержкой формата [Agent Skills](https://agentskills.io)) три вещи:
 
@@ -16,7 +16,9 @@ Agent Skill для разработки на Java в любой области: 
 java-knowledge/
 ├── SKILL.md                      точка входа: куда смотреть и как работать
 ├── scripts/
-│   └── BenchCompare.java         сравнение прогонов JMH с учётом шума, запуск без сборки на JDK 17+
+│   ├── BenchCompare.java         сравнение прогонов JMH с учётом шума, запуск без сборки на JDK 17+
+│   ├── tick_sprint_bench.sh      бенчмарк сервера Minecraft командой /tick sprint в формате JMH JSON
+│   └── EmptyStructure.java       пустая структура .nbt для GameTest
 └── references/
     ├── pipeline.md               пайплайн разработки и оптимизации
     ├── toolchain.md              JDK, Maven, Gradle, анализаторы, безопасность, CI, шаблоны
@@ -27,13 +29,19 @@ java-knowledge/
     ├── concurrency-native.md     модель памяти, виртуальные потоки, структурная конкурентность, FFM API, JNI
     ├── domains-server.md         Spring Boot, Quarkus, базы данных, Kafka, наблюдаемость, безопасность, деплой
     ├── domains-client.md         библиотеки, CLI, десктоп, данные, ML и LLM, игры, embedded, WebAssembly
-    └── books.md                  книги, блоги, доклады, курсы и маршрут чтения по уровням
+    ├── books.md                  книги, блоги, доклады, курсы и маршрут чтения по уровням
+    ├── minecraft-modding.md      ветвь Minecraft: загрузчики, версии, тулчейн, публикация, шаблоны модов
+    ├── minecraft-mod-api.md      код мода: реестры, данные, сеть, миксины, рендер, что сломалось в 26.x
+    ├── minecraft-performance-testing.md  MSPT и FPS, spark, JFR, /tick sprint, GameTest, отладка
+    ├── minecraft-server-plugins.md       Paper, Folia, Velocity, датапаки, шаблоны плагинов
+    └── minecraft-resources.md    документация, курсы, эталонные моды, маршрут обучения
 ```
 
 В репозитории, помимо самого скилла, есть `tests/` и CI на GitHub Actions. Они проверяют, что скилл не врёт:
 
 - `ci.yml` — это шаблон workflow из `toolchain.md`, работающий дословно. Он собирает шаблоны Maven (Ubuntu с JDK 25 и 27, Windows) и Gradle из `tests/templates`, а `tests/check_docs.mjs` следит, чтобы эти файлы побайтно совпадали с текстом справочника. Там же проверяются все относительные ссылки и якоря и 17 тестов `BenchCompare.java` на настоящих прогонах JMH (JDK 17 и 25, Linux и Windows);
-- `profilers.yml` — собирает JMH-проект из сниппета `performance.md` и подтверждает утверждения о профайлерах Linux: async-profiler и JFR CPU-time (JEP 509) работают без root, а perfnorm без аппаратных счётчиков не запускается.
+- `profilers.yml` — собирает JMH-проект из сниппета `performance.md` и подтверждает утверждения о профайлерах Linux: async-profiler и JFR CPU-time (JEP 509) работают без root, а perfnorm без аппаратных счётчиков не запускается;
+- `minecraft.yml` — собирает шаблоны из справочников Minecraft и запускает их в игре. Моды Fabric и NeoForge проходят GameTest на безголовом сервере Minecraft 26.3, а подменённая проверка в тесте должна валить прогон. Плагин Paper проходит тест MockBukkit и включается на настоящем сервере Paper 26.3; команда плагина выполняется с консоли сервера. Бенчмарк `/tick sprint` снимается на настоящих серверах Paper, Fabric и NeoForge с модом-шаблоном, его результат разбирает `BenchCompare.java`. Плагин Velocity собирается, процессор аннотаций генерирует его дескриптор.
 
 Агент загружает `SKILL.md`, когда задача касается Java. Справочники он открывает только тогда, когда нужен конкретный раздел, поэтому скилл почти не занимает контекст, пока не используется.
 
@@ -64,6 +72,9 @@ cp -r java-knowledge-skill/java-knowledge ~/.claude/skills/
 - «Сделай ревью сервиса на Spring Boot 4 по чеклистам серверного кода и конкурентности»
 - «Проведи цикл оптимизации: бенчмарки JMH, базовый замер, гипотезы из библиотеки, повторный замер»
 - «Стоит ли переводить сервис на виртуальные потоки и что при этом проверить?»
+- «Создай мод на NeoForge для Minecraft 26.3 с новым блоком, датагеном и GameTest в CI»
+- «Сервер с модами лагает, spark показывает много времени в тике сущностей блоков нашего мода — как найти и проверить исправление?»
+- «Перенеси мод с Fabric 1.21.11 на 26.3: что сломается?»
 
 Сравнение прогонов JMH:
 

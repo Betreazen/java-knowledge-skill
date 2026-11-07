@@ -11,6 +11,7 @@
 - [Этап 8. Ревью кода](#этап-8-ревью-кода)
 - [Этап 9. Поиск в библиотеке знаний](#этап-9-поиск-в-библиотеке-знаний)
 - [Этапы 10–11. Оптимизация и повторный замер](#этапы-1011-оптимизация-и-повторный-замер)
+- [Моды и плагины Minecraft](#моды-и-плагины-minecraft)
 - [Короткий режим](#короткий-режим)
 - [Почему так](#почему-так)
 
@@ -264,6 +265,43 @@ java ~/.claude/skills/java-knowledge/scripts/BenchCompare.java "$OUT/before" "$O
 | `+=` в цикле → `StringBuilder` в `Join.join` | ссылка из библиотеки | 517 мкс, 3,5 МБ/оп | 15,7 мкс, 25 КБ/оп | слита |
 
 Журнал не даёт повторно проверять отклонённые идеи. Если гипотезы сливались, следующий круг начинается с нового main. Цикл 7–11 повторяется, пока остаются гипотезы с ожидаемым эффектом выше порога.
+
+## Моды и плагины Minecraft
+
+Для модов Fabric и NeoForge и плагинов Paper и Velocity пайплайн тот же, меняются инструменты на этапах. В CI репозитория скилла на GitHub Actions (Minecraft 26.3, Temurin 25, ноябрь 2026) проверены только таблица «Что проверено в CI» и скрипт `/tick sprint` на серверах Paper, Fabric и NeoForge с модом-шаблоном; остальное (datagen, JMH с `Bootstrap`, spark, клиентские gametest) там не запускалось `[не проверено]`. Шаблоны проектов — в [minecraft-modding.md → «Шаблоны»](minecraft-modding.md#шаблоны) и [minecraft-server-plugins.md → «Шаблоны»](minecraft-server-plugins.md#шаблоны).
+
+**Опрос (этап 1)** добавляет вопросы: версия игры (26.x или последняя 1.21.x — от неё зависят Java, имена классов и сборка), загрузчик или серверное ПО, нужен ли мод на клиенте, на сервере или на обоих, совместимость с какими модами важна, где будет публикация.
+
+**Проверки качества.** Тесты в игре — GameTest на настоящем безголовом сервере:
+
+| Проект | Команды | Что проверено в CI |
+| --- | --- | --- |
+| Мод Fabric | `./gradlew build` | `build` сам запускает задачу `runGameTest`: «All 2 required tests passed». Сломанная проверка в тесте валит прогон |
+| Мод NeoForge | `./gradlew build`, затем `./gradlew runGameTestServer` | То же. Тесту нужна структура; пустую создаёт [EmptyStructure.java](../scripts/EmptyStructure.java) |
+| Плагин Paper | `./gradlew build`, затем запуск настоящего сервера с плагином | MockBukkit-тест в `build`; сервер Paper 26.3 стартует и пишет «Enabling ExamplePlugin»; команда плагина, выполненная с консоли, отвечает «No player was found», то есть зарегистрирована (MockBukkit команды из bootstrapper не видит). `paper-api` в `compileOnly` не попадает в тесты — нужен ещё `testImplementation` |
+| Плагин Velocity | `./gradlew build` | Процессор аннотаций генерирует `velocity-plugin.json` |
+
+Если проект генерирует данные (datagen), добавьте прогон генерации и `git diff --exit-code` по сгенерированным ресурсам: так видно, что закоммиченные JSON совпадают с кодом `[не проверено]`. Подробности о тестах — [minecraft-performance-testing.md → «Тесты: GameTest и юнит-тесты»](minecraft-performance-testing.md#тесты-gametest-и-юнит-тесты).
+
+**Бенчмарки (этапы 6–7)** бывают двух уровней:
+
+- **Логика без игры — JMH**, как в [этапе 6](#этап-6-бенчмарки). Форки JMH запускаются без загрузчика: миксины и access transformers не применяются, реестры пустые. Коду, который трогает реестры или `ItemStack`, нужен `SharedConstants.tryDetectVersion()` и `Bootstrap.bootStrap()` в `@Setup`, иначе он падает с «Not bootstrapped» `[не проверено]`. Подробности — [minecraft-performance-testing.md → «JMH для логики мода»](minecraft-performance-testing.md#jmh-для-логики-мода).
+- **Сервер целиком — `/tick sprint`.** Ванильная команда прогоняет заданное число тиков без пауз и печатает «Sprint completed with X ticks per second, or Y ms per tick». Скрипт [tick_sprint_bench.sh](../scripts/tick_sprint_bench.sh) запускает сервер, загружает чанки вокруг 0,0, отбрасывает прогревочные спринты и пишет результат в формате JMH JSON. Значит, «до» и «после» сравнивает тот же `BenchCompare.java`. Мир для замера — сохранённый, с фиксированным seed и реалистичной нагрузкой: мобы, сущности блоков, фермы, контент самого мода. Пустой мир почти ничего не измеряет: в проверке на Paper 26.3 он давал 0,2 мс на тик. Порядок прогонов тот же — 5 запусков сервера на сторону, ABBA. Подробности — [minecraft-performance-testing.md → «Бенчмарк мира: /tick sprint»](minecraft-performance-testing.md#бенчмарк-мира-tick-sprint).
+
+```bash
+# в папке тестового сервера: server.jar, eula.txt, сохранённый мир, моды или плагины ветки
+bash ~/.claude/skills/java-knowledge/scripts/tick_sprint_bench.sh server.jar bench/before/run1.json 5 1200 64 testworld
+# сервер с модами стартует командой, а не jar:
+#   NeoForge: tick_sprint_bench.sh "bash run.sh nogui" ...
+#   Fabric:   tick_sprint_bench.sh "java -Xmx2G -jar fabric-server-launch.jar nogui" ...
+java ~/.claude/skills/java-knowledge/scripts/BenchCompare.java bench/before bench/after
+```
+
+**Профиль (этап 7)** — spark (`/spark profiler start`, затем `/spark profiler stop`) на сервере и клиенте или встроенный JFR игры (`/jfr start`, `/jfr stop`, разбор через `jfr view`). Подробности и выбор — [minecraft-performance-testing.md → «Профилирование: spark, JFR и другие»](minecraft-performance-testing.md#профилирование-spark-jfr-и-другие).
+
+**Ревью (этап 8)** — по чеклистам [minecraft-mod-api.md → «Чеклист ревью кода мода»](minecraft-mod-api.md#чеклист-ревью-кода-мода), [minecraft-server-plugins.md → «Чеклист ревью плагина»](minecraft-server-plugins.md#чеклист-ревью-плагина) и [minecraft-performance-testing.md → «Чеклист ревью производительности и стабильности»](minecraft-performance-testing.md#чеклист-ревью-производительности-и-стабильности), плюс общий чеклист Java. Типичные баги модов: клиентские классы, на которые ссылается серверный код; работа с миром не из серверного потока; непроверенные данные из пакетов клиента; аллокации и обход мира в каждом тике.
+
+**Поиск решений (этап 9)** начинается с таблицы [minecraft-performance-testing.md → «Симптом → техника → источник»](minecraft-performance-testing.md#симптом--техника--источник), а для чистой Java — с общей таблицы в [performance.md](performance.md#симптом--техника--источник).
 
 ## Короткий режим
 
