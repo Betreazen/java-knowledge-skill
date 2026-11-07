@@ -65,6 +65,28 @@ templates.forEach(([lang, file], i) => {
   else console.log('ok   template tests/jmh/pom.xml (fragment from performance.md)');
 }
 
+// Блоки с пометкой <!-- template: путь --> на строке перед ограждением кода должны совпадать с файлом.
+{
+  const refsDir = path.join(root, 'java-knowledge', 'references');
+  let marked = 0;
+  for (const name of fs.readdirSync(refsDir).filter((n) => n.endsWith('.md'))) {
+    const ls = fs.readFileSync(path.join(refsDir, name), 'utf8').replace(/\r/g, '').split('\n');
+    ls.forEach((l, i) => {
+      const m = /^<!-- template: (\S+) -->$/.exec(l.trim());
+      if (!m) return;
+      marked++;
+      const where = `${name}:${i + 1}`;
+      if (!ls[i + 1]?.startsWith('```')) return fail(`${where} template marker is not followed by a code fence`);
+      const end = ls.findIndex((x, j) => j > i + 1 && x.startsWith('```'));
+      if (end < 0) return fail(`${where} unterminated code block`);
+      const file = path.join(root, m[1]);
+      if (!fs.existsSync(file)) return fail(`${where} template file ${m[1]} does not exist`);
+      if (norm(ls.slice(i + 2, end).join('\n')) !== norm(read(m[1]))) fail(`${where} block differs from ${m[1]}`);
+    });
+  }
+  console.log(`ok   ${marked} marked templates compared with tests/ files`);
+}
+
 // ---- 2. ссылки и якоря ----
 const mdFiles = [];
 (function walk(dir) {
