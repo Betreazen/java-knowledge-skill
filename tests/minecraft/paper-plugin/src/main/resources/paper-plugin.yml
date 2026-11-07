@@ -1,0 +1,10 @@
+name: ExamplePlugin
+version: '${version}'
+main: com.example.plugin.ExamplePlugin
+bootstrapper: com.example.plugin.ExampleBootstrap
+api-version: '26.3'
+description: Minimal Paper 26.3 plugin (Brigadier + PDC)
+folia-supported: false
+permissions:
+  example.visits.reset:
+    default: op

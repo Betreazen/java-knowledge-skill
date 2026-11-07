@@ -1,0 +1,50 @@
+name: minecraft
+# Собирает шаблоны модов и плагинов Minecraft из справочников minecraft-*.md
+# и запускает их в настоящей игре или на сервере.
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'tests/minecraft/**'
+      - '.github/workflows/minecraft.yml'
+  pull_request:
+    paths:
+      - 'tests/minecraft/**'
+permissions:
+  contents: read
+
+jobs:
+  paper-plugin:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: tests/minecraft/paper-plugin
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '25'
+      - uses: gradle/actions/setup-gradle@v6
+      - name: Build and MockBukkit test
+        run: ./gradlew build --stacktrace
+      - name: Start Paper 26.3 with the plugin
+        working-directory: .
+        run: bash tests/minecraft/paper_smoke.sh
+
+  velocity-plugin:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: tests/minecraft/velocity-plugin
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '25'
+      - uses: gradle/actions/setup-gradle@v6
+      - name: Build (annotation processor generates velocity-plugin.json)
+        run: |
+          ./gradlew build --stacktrace
+          unzip -p build/libs/*.jar velocity-plugin.json
